@@ -21,7 +21,7 @@ function SelectRoleContent() {
             try {
                 const token = localStorage.getItem('auth_token');
                 if (!token) {
-                    router.push('/login');
+                    window.location.href = '/login';
                     return;
                 }
 
@@ -30,8 +30,8 @@ function SelectRoleContent() {
                 });
 
                 if (response.data.role) {
-                    // User already has role - redirect to dashboard
-                    router.push(redirect);
+                    // User already has role - redirect to dashboard (hard refresh)
+                    window.location.href = redirect;
                     return;
                 }
             } catch (error) {
@@ -55,7 +55,7 @@ function SelectRoleContent() {
         try {
             const token = localStorage.getItem('auth_token');
             if (!token) {
-                router.push('/login');
+                window.location.href = '/login';
                 return;
             }
 
