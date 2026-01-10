@@ -39,6 +39,23 @@ def initialize_firebase_admin():
         # Backend directory - always use this as the base for relative paths
         backend_dir = Path(__file__).parent.parent.resolve()
         
+        # PRIORITY 0: Check for Base64 encoded service account (Railway deployment)
+        base64_creds = os.environ.get("FIREBASE_SERVICE_ACCOUNT_BASE64")
+        if base64_creds:
+            logger.info("Priority 0: Found FIREBASE_SERVICE_ACCOUNT_BASE64, decoding...")
+            try:
+                import base64
+                import json
+                # Decode Base64 to JSON string, then parse to dict
+                creds_json = base64.b64decode(base64_creds).decode('utf-8')
+                creds_dict = json.loads(creds_json)
+                cred = credentials.Certificate(creds_dict)
+                _firebase_app = firebase_admin.initialize_app(cred)
+                logger.info("SUCCESS: Firebase Admin initialized with Base64 credentials")
+                return _firebase_app
+            except Exception as e:
+                logger.error(f"Failed to decode Base64 credentials: {e}")
+        
         # PRIORITY 1: Check for service account file directly in backend folder
         direct_cred_path = backend_dir / "firebase-service-account.json"
         logger.info(f"Priority 1: Checking for direct file: {direct_cred_path}")
