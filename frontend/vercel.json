@@ -6,8 +6,5 @@
     "framework": "nextjs",
     "regions": [
         "sin1"
-    ],
-    "env": {
-        "NEXT_PUBLIC_API_BASE": "@api_base_url"
-    }
+    ]
 }

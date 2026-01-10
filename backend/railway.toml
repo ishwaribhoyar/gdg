@@ -5,6 +5,6 @@ builder = "nixpacks"
 providers = ["python"]
 
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+startCommand = "python -c \"import os; import subprocess; subprocess.run(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', os.environ.get('PORT', '8000')])\""
 healthcheckPath = "/health"
 restartPolicyType = "on_failure"
