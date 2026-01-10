@@ -1,8 +1,0 @@
-HTTP/1.1 400 Bad Request
-date: Tue, 09 Dec 2025 09:18:28 GMT
-server: uvicorn
-content-type: text/plain; charset=utf-8
-content-length: 30
-connection: close
-
-Invalid HTTP request received.
