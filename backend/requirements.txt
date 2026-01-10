@@ -2,10 +2,9 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# Database
+# Database (SQLite only - no PostgreSQL)
 sqlalchemy==2.0.44
 pymongo>=4.0.0
-psycopg2-binary>=2.9.0
 
 # File handling
 python-multipart==0.0.6

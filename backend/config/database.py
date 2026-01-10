@@ -1,6 +1,6 @@
 """
 Database connection and configuration
-Supports PostgreSQL (Supabase) and SQLite (fallback for development)
+Uses SQLite for data storage + Firebase for auth/storage
 """
 
 from sqlalchemy import create_engine, Column, String, Integer, Float, DateTime, Text, JSON, Index
@@ -10,69 +10,50 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import logging
+from sqlalchemy import event
 
 logger = logging.getLogger(__name__)
 
-# Check for PostgreSQL connection string (Supabase)
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Always use SQLite (production and development)
+logger.info("Using SQLite database with WAL mode")
 
-if DATABASE_URL:
-    # Use PostgreSQL (Supabase)
-    # PostgreSQL connection string format: postgresql://user:password@host:port/database
-    # Supabase format: postgresql://postgres:password@db.xxx.supabase.co:5432/postgres
-    logger.info("Using PostgreSQL database (Supabase)")
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,  # Verify connections before using
-        pool_size=5,  # Connection pool size
-        max_overflow=10,  # Max connections beyond pool_size
-        echo=False
-    )
-    DB_TYPE = "postgresql"
+# Use /data/app.db for production (Railway), or local path for development
+SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH")
+if SQLITE_DB_PATH:
+    DB_DIR = Path(SQLITE_DB_PATH).parent
+    DB_PATH = Path(SQLITE_DB_PATH)
 else:
-    # SQLite for production (WAL mode for better concurrency)
-    logger.info("Using SQLite database with WAL mode (production)")
-    
-    # Use /data/app.db for production (Railway), or local path for development
-    PRODUCTION_DB_PATH = os.getenv("SQLITE_DB_PATH")
-    if PRODUCTION_DB_PATH:
-        DB_DIR = Path(PRODUCTION_DB_PATH).parent
-        DB_PATH = Path(PRODUCTION_DB_PATH)
-    else:
-        DB_DIR = Path(__file__).parent.parent / "data"
-        DB_PATH = DB_DIR / "app.db"
-    
-    DB_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # SQLite event listener to enable WAL mode and performance PRAGMAs
-    from sqlalchemy import event
-    
-    def configure_sqlite(dbapi_connection, connection_record):
-        """Configure SQLite for production performance"""
-        cursor = dbapi_connection.cursor()
-        # Enable WAL mode for better concurrent reads
-        cursor.execute("PRAGMA journal_mode=WAL")
-        # Synchronous NORMAL is safe with WAL and faster than FULL
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        # Store temp tables in memory for speed
-        cursor.execute("PRAGMA temp_store=MEMORY")
-        # Increase cache size (negative = KB, positive = pages)
-        cursor.execute("PRAGMA cache_size=-64000")  # 64MB cache
-        # Enable foreign keys
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-    
-    engine = create_engine(
-        f"sqlite:///{DB_PATH}",
-        connect_args={"check_same_thread": False},  # Needed for SQLite with threads
-        echo=False
-    )
-    
-    # Register the connection event
-    event.listen(engine, "connect", configure_sqlite)
-    
-    DB_TYPE = "sqlite"
-    logger.info(f"SQLite database path: {DB_PATH}")
+    DB_DIR = Path(__file__).parent.parent / "data"
+    DB_PATH = DB_DIR / "app.db"
+
+DB_DIR.mkdir(parents=True, exist_ok=True)
+
+def configure_sqlite(dbapi_connection, connection_record):
+    """Configure SQLite for production performance"""
+    cursor = dbapi_connection.cursor()
+    # Enable WAL mode for better concurrent reads
+    cursor.execute("PRAGMA journal_mode=WAL")
+    # Synchronous NORMAL is safe with WAL and faster than FULL
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    # Store temp tables in memory for speed
+    cursor.execute("PRAGMA temp_store=MEMORY")
+    # Increase cache size (negative = KB, positive = pages)
+    cursor.execute("PRAGMA cache_size=-64000")  # 64MB cache
+    # Enable foreign keys
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+engine = create_engine(
+    f"sqlite:///{DB_PATH}",
+    connect_args={"check_same_thread": False},  # Needed for SQLite with threads
+    echo=False
+)
+
+# Register the connection event
+event.listen(engine, "connect", configure_sqlite)
+
+DB_TYPE = "sqlite"
+logger.info(f"SQLite database path: {DB_PATH}")
 
 
 # Session factory
