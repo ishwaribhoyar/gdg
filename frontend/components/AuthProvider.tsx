@@ -42,9 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (mounted) {
         if (firebaseUser) {
-          // User is signed in, get backend user info
-          const currentUser = getCurrentUser();
-          setUser(currentUser);
+          // User is signed in - check localStorage first for cached user info
+          const storedUser = localStorage.getItem('auth_user');
+          if (storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              setUser(parsedUser);
+            } catch {
+              // Fall back to in-memory user
+              setUser(getCurrentUser());
+            }
+          } else {
+            // No stored user, use in-memory
+            setUser(getCurrentUser());
+          }
         } else {
           // User is signed out
           setUser(null);
