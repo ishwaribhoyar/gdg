@@ -405,12 +405,10 @@ def get_kpi_details_endpoint(
                     if batch.user_id != user_id:
                         raise HTTPException(status_code=403, detail="Access denied")
         
-        # INVALID BATCH ENFORCEMENT
-        if batch.is_invalid == 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot get KPI details for invalid batch"
-            )
+        
+        # NOTE: Removed is_invalid blocking - allow users to see whatever KPI data is available
+        # The frontend should handle incomplete data gracefully
+        # Previously: if batch.is_invalid == 1: raise HTTPException(400, "Cannot get KPI details for invalid batch")
         
         return get_kpi_details(batch_id, kpi_type)
     except HTTPException:
@@ -594,12 +592,15 @@ def get_forecast(
                     if batch.user_id != user_id:
                         raise HTTPException(status_code=403, detail="Access denied")
         
-        # Check if batch is invalid
+        # NOTE: Return graceful response for invalid batches instead of blocking
+        # Previously: if batch.is_invalid == 1: raise HTTPException(400, "Cannot generate forecast")
         if batch.is_invalid == 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot generate forecast for invalid batch. Batch marked as invalid due to insufficient data."
-            )
+            return {
+                "has_forecast": False,
+                "insufficient_data": True,
+                "insufficient_data_reason": "Batch marked as invalid due to insufficient data",
+                "forecast": None
+            }
         
         # Get historical batches for same department
         if not batch.institution_name or not batch.department_name:
