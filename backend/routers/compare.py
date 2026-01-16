@@ -36,6 +36,7 @@ def _validate_batch(batch_id: str) -> Tuple[bool, Optional[str], Optional[Dict]]
     """
     Validate if a batch is eligible for comparison.
     STRICT: Exclude invalid batches, batches with 0 docs, incomplete processing.
+    Exception: System batches may have blocks but no files.
     
     Returns: (is_valid, skip_reason, batch_info)
     """
@@ -45,6 +46,9 @@ def _validate_batch(batch_id: str) -> Tuple[bool, Optional[str], Optional[Dict]]
         
         if not batch:
             return False, "batch_not_found", None
+        
+        # Check if this is a system batch (seeded demo data)
+        is_system_batch = getattr(batch, 'data_source', 'user') == 'system'
         
         # CRITICAL: Use ProductionGuard to validate batch
         is_valid, error_msg = ProductionGuard.validate_batch_for_operations(batch)
@@ -56,20 +60,40 @@ def _validate_batch(batch_id: str) -> Tuple[bool, Optional[str], Optional[Dict]]
             return False, f"status_{batch.status}", {"mode": batch.mode}
         
         # Check documents - must have at least 1 processed document
+        # Exception: System batches may have blocks but no files
         from config.database import File
         file_count = db.query(File).filter(File.batch_id == batch_id).count()
-        if file_count == 0:
-            return False, "no_processed_documents", {"mode": batch.mode}
         
         # Check blocks - must have at least some extracted data
         blocks = db.query(Block).filter(Block.batch_id == batch_id).all()
         valid_blocks = [b for b in blocks if not (hasattr(b, 'is_invalid') and b.is_invalid == 1)]
-        if len(valid_blocks) == 0:
-            return False, "no_valid_blocks", {"mode": batch.mode}
+        
+        # For system batches: require blocks (not files)
+        # For user batches: require both files and blocks
+        if is_system_batch:
+            if len(valid_blocks) == 0:
+                return False, "no_valid_blocks", {"mode": batch.mode}
+        else:
+            if file_count == 0:
+                return False, "no_processed_documents", {"mode": batch.mode}
+            if len(valid_blocks) == 0:
+                return False, "no_valid_blocks", {"mode": batch.mode}
         
         # Check KPIs - must have at least one valid KPI > 0
         kpi_results = batch.kpi_results or {}
-        overall_score = kpi_results.get("overall_score", {}).get("value")
+        
+        # Handle both formats: nested dict {value: X} and direct numeric X
+        def get_kpi_value(key):
+            val = kpi_results.get(key)
+            if val is None:
+                return None
+            if isinstance(val, dict):
+                return val.get("value")
+            if isinstance(val, (int, float)):
+                return val
+            return None
+        
+        overall_score = get_kpi_value("overall_score")
         if overall_score is None or overall_score == 0:
             return False, "no_valid_kpis", {"mode": batch.mode, "overall_score": overall_score}
         
