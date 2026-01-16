@@ -301,6 +301,7 @@ def seed_system_batches():
                 data_source="system",
                 is_invalid=0,
                 overall_score=batch_data["overall_score"],  # CRITICAL: Set column for ProductionGuard
+                sufficiency=batch_data["sufficiency"],  # CRITICAL: Set column for ProductionGuard
                 kpi_results={
                     "fsr_score": batch_data["overall_score"] - 8 + (hash(batch_data["year"]) % 10),
                     "infrastructure_score": batch_data["overall_score"] - 5 + (hash(batch_data["department"]) % 8),
@@ -338,6 +339,7 @@ def seed_system_batches():
             data_source="system",
             is_invalid=0,
             overall_score=72.1,  # CRITICAL: Set column for ProductionGuard
+            sufficiency=85.5,  # CRITICAL: Set column for ProductionGuard
             kpi_results={
                 "po_attainment": 71.9,
                 "pso_attainment": 73.15,

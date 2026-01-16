@@ -119,6 +119,8 @@ class Batch(Base):
     
     # Data validation flags
     is_invalid = Column(Integer, default=0)  # 0 = valid, 1 = invalid (no dummy data stored)
+    overall_score = Column(Float, nullable=True)  # Overall KPI score (for ProductionGuard validation)
+    sufficiency = Column(Float, nullable=True)  # Sufficiency percentage (for ProductionGuard validation)
     authenticity_score = Column(Float, nullable=True)  # From authenticity service
     
     # Results stored as JSON (temporary)
@@ -278,6 +280,22 @@ def init_db():
                 conn.execute(text("ALTER TABLE batches ADD COLUMN data_source TEXT DEFAULT 'user'"))
                 conn.commit()
             logger.info("Migration complete: data_source column added")
+        
+        # Add overall_score column if missing (for ProductionGuard)
+        if 'overall_score' not in columns:
+            logger.info("Migrating: Adding overall_score column to batches table")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE batches ADD COLUMN overall_score REAL"))
+                conn.commit()
+            logger.info("Migration complete: overall_score column added")
+        
+        # Add sufficiency column if missing (for ProductionGuard)
+        if 'sufficiency' not in columns:
+            logger.info("Migrating: Adding sufficiency column to batches table")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE batches ADD COLUMN sufficiency REAL"))
+                conn.commit()
+            logger.info("Migration complete: sufficiency column added")
     
     if DB_TYPE == "postgresql":
         logger.info("PostgreSQL database initialized (Supabase)")
