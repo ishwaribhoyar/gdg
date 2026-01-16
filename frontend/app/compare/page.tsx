@@ -297,7 +297,7 @@ function ComparePageContent() {
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-2">
+                                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                                                         <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase ${batch.mode === 'aicte' ? 'bg-primary-100 text-primary' :
                                                             batch.mode === 'ugc' ? 'bg-accent-100 text-accent' :
                                                                 'bg-purple-100 text-purple-600'
@@ -307,12 +307,17 @@ function ComparePageContent() {
                                                         <span className="px-2 py-0.5 rounded text-xs bg-green-50 text-green-600">
                                                             ✓ Completed
                                                         </span>
+                                                        {batch.data_source === 'system' && (
+                                                            <span className="px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-600 font-medium">
+                                                                System
+                                                            </span>
+                                                        )}
                                                         <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
                                                             {batch.total_documents} doc{batch.total_documents !== 1 ? 's' : ''}
                                                         </span>
                                                     </div>
                                                     <p className="text-sm text-gray-700 font-medium truncate">
-                                                        Institution #{batch.batch_id.slice(-8)}
+                                                        {batch.institution_name || `Institution #${batch.batch_id.slice(-8)}`}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-1">
                                                         {new Date(batch.created_at).toLocaleDateString()}

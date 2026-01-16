@@ -129,6 +129,10 @@ class Batch(Base):
     approval_classification = Column(JSON, nullable=True)
     approval_readiness = Column(JSON, nullable=True)
     unified_report = Column(JSON, nullable=True)
+    
+    # Data source tracking (metadata only - no special logic branching)
+    # "user" = uploaded PDFs, "system" = pre-seeded historical data
+    data_source = Column(String, default="user")
 
 class Block(Base):
     __tablename__ = "blocks"

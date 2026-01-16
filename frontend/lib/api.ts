@@ -73,6 +73,7 @@ export interface BatchResponse {
   total_documents: number;
   processed_documents: number;
   institution_name: string | null;
+  data_source?: 'user' | 'system';  // "user" = uploaded PDFs, "system" = pre-seeded historical data
 }
 
 export interface DocumentUploadResponse {
@@ -347,7 +348,7 @@ export const dashboardApi = {
     if (params?.academic_year) queryParams.append('academic_year', params.academic_year);
     if (params?.mode) queryParams.append('mode', params.mode);
     if (params?.department_name) queryParams.append('department_name', params.department_name);
-    
+
     const url = `/dashboard/evaluations${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await api.get<Evaluation[]>(url);
     return response.data;

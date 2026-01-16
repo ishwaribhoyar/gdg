@@ -206,48 +206,14 @@ def list_batches(
                 status=batch.status,
                 created_at=batch.created_at.isoformat() if batch.created_at else "",
                 updated_at=batch.created_at.isoformat() if batch.created_at else "",
-                total_documents=file_count,
+                total_documents=file_count if file_count > 0 else (block_count if block_count > 0 else 0),
                 processed_documents=file_count if batch.status == "completed" else 0,
-                institution_name=None
+                institution_name=batch.institution_name,
+                data_source=getattr(batch, 'data_source', 'user') or 'user'
             ))
         
-        # Add demo batches for comparison and trends testing
-        # These are hardcoded entries that trigger demo data handlers
-        demo_batches = [
-            BatchResponse(
-                batch_id="demo-batch-aicte-2024",
-                mode="aicte",
-                status="completed",
-                created_at="2024-11-15T10:00:00",
-                updated_at="2024-11-15T12:30:00",
-                total_documents=5,
-                processed_documents=5,
-                institution_name="IIT Delhi - CSE Department"
-            ),
-            BatchResponse(
-                batch_id="demo-batch-aicte-2023",
-                mode="aicte",
-                status="completed",
-                created_at="2023-10-20T09:00:00",
-                updated_at="2023-10-20T11:45:00",
-                total_documents=4,
-                processed_documents=4,
-                institution_name="NIT Trichy - ECE Department"
-            ),
-            BatchResponse(
-                batch_id="demo-batch-nba-2024",
-                mode="nba",
-                status="completed",
-                created_at="2024-09-10T14:00:00",
-                updated_at="2024-09-10T16:00:00",
-                total_documents=6,
-                processed_documents=6,
-                institution_name="BITS Pilani - Mech Department"
-            ),
-        ]
-        
-        # Add demo batches to result
-        result.extend(demo_batches)
+        # NO DEMO BATCHES - System batches are now stored in DB via seeder script
+        # Run: python backend/scripts/seed_system_batches.py
         
         return result
     except Exception as e:

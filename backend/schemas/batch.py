@@ -24,6 +24,7 @@ class BatchResponse(BaseModel):
     total_documents: int
     processed_documents: int
     institution_name: Optional[str] = None
+    data_source: Optional[str] = "user"  # "user" = uploaded, "system" = pre-seeded
     
     class Config:
         from_attributes = True
