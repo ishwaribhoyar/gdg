@@ -130,6 +130,11 @@ def root():
         "architecture": "Information Block Architecture - SQLite Temporary Storage"
     }
 
+@app.get("/health")
+def root_health_check():
+    """Root health check for Railway deployment"""
+    return {"status": "healthy"}
+
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy"}
